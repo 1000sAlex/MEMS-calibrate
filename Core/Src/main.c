@@ -30,6 +30,7 @@
 
 /* USER CODE END Includes */
 
+
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 int _write(int file, char *ptr, int len)
