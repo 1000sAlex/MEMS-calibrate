@@ -66,12 +66,6 @@ inline static void Mag_Get_raw(void)
     LSM303_data.magY = (temp[3] << 8);
     LSM303_data.magZ = temp[4];
     LSM303_data.magZ = (temp[5] << 8);
-//    LSM303_data.magX = (Accel_IO_Read(0x3D, 0x03) << 8);
-//    LSM303_data.magX |= Accel_IO_Read(0x3D, 0x04);
-//    LSM303_data.magY = (Accel_IO_Read(0x3D, 0x05) << 8);
-//    LSM303_data.magY |= Accel_IO_Read(0x3D, 0x06);
-//    LSM303_data.magZ = (Accel_IO_Read(0x3D, 0x07) << 8);
-//    LSM303_data.magZ |= Accel_IO_Read(0x3D, 0x08);
     }
 
 
