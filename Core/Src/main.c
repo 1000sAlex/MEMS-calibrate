@@ -66,7 +66,7 @@ void SystemClock_Config(void);
 void Task_led(void)
     {
     SetTimerTask(Task_led, 49);
-    LED_B2_GPIO_Port->ODR ^= LED_B2_Pin;
+    LED_G1_GPIO_Port->ODR ^= LED_G1_Pin;
     }
 
 volatile u32 count = 0;
