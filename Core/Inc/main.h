@@ -41,7 +41,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lsm303dlhc.h"
+#include "EERTOS.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -56,6 +58,15 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+#define ABS(x)         (x < 0) ? (-x) : x
+#define BitIsSet(reg, bit)	((reg & (1<<(bit))) != 0)
+#define BitIsClear(reg, bit)	((reg & (1<<(bit))) == 0)
+#define u32 uint32_t
+#define s32 int32_t
+#define u16 uint16_t
+#define s16 int16_t
+#define u8 uint8_t
+#define s8 int8_t
 
 /* USER CODE END EM */
 

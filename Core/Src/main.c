@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -31,7 +31,13 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+int _write(int file, char *ptr, int len)
+    {
+    int i = 0;
+    for (i = 0; i < len; i++)
+	ITM_SendChar(*ptr++);
+    return len;
+    }
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,129 +63,146 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Task_led(void)
+    {
+    SetTimerTask(Task_led, 49);
+    LED_B1_GPIO_Port->ODR ^= LED_B1_Pin;
+    }
 
+volatile u32 count = 0;
+extern LSM_DATA LSM303_data;
+void Acc_read(void)
+    {
+    count++;
+    SetTimerTask(Acc_read, 100);
+    //Accel_GetXYZ(buf);
+    printf("acc X=%d, Y=%d, Z=%d\n", LSM303_data.accX, LSM303_data.accY,
+	    LSM303_data.accZ);
+    //Mag_GetXYZ(buf);
+    printf("mag X=%d, Y=%d, Z=%d\n", LSM303_data.magX, LSM303_data.magY,
+	    LSM303_data.magZ);
+    }
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
-{
-  /* USER CODE BEGIN 1 */
+    {
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
-  
+    /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* USER CODE BEGIN Init */
+    /* USER CODE BEGIN Init */
 
+    /* USER CODE END Init */
 
-  /* USER CODE END Init */
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* USER CODE BEGIN SysInit */
+    InitRTOS();
+    /* USER CODE END SysInit */
 
-  /* USER CODE BEGIN SysInit */
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_I2C1_Init();
+    MX_USART1_UART_Init();
+    /* USER CODE BEGIN 2 */
+    Accel_Init();
+    Task_led();
+    Acc_read();
 
-  /* USER CODE END SysInit */
+    /* USER CODE END 2 */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_I2C1_Init();
-  MX_USART1_UART_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
- 
- 
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
-}
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1)
+	{
+	TaskManager();
+	/* USER CODE END WHILE */
+	/* USER CODE BEGIN 3 */
+	}
+    /* USER CODE END 3 */
+    }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
-{
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
+    {
+    LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
 
-   if(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2)
-  {
-  Error_Handler();  
-  }
-  LL_RCC_HSE_Enable();
+    if (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2)
+	{
+	Error_Handler();
+	}
+    LL_RCC_HSE_Enable();
 
-   /* Wait till HSE is ready */
-  while(LL_RCC_HSE_IsReady() != 1)
-  {
-    
-  }
-  LL_RCC_HSI_Enable();
+    /* Wait till HSE is ready */
+    while (LL_RCC_HSE_IsReady() != 1)
+	{
 
-   /* Wait till HSI is ready */
-  while(LL_RCC_HSI_IsReady() != 1)
-  {
-    
-  }
-  LL_RCC_HSI_SetCalibTrimming(16);
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_1, LL_RCC_PLL_MUL_9);
-  LL_RCC_PLL_Enable();
+	}
+    LL_RCC_HSI_Enable();
 
-   /* Wait till PLL is ready */
-  while(LL_RCC_PLL_IsReady() != 1)
-  {
-    
-  }
-  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
-  LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+    /* Wait till HSI is ready */
+    while (LL_RCC_HSI_IsReady() != 1)
+	{
 
-   /* Wait till System clock is ready */
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
-  {
-  
-  }
-  LL_SetSystemCoreClock(72000000);
+	}
+    LL_RCC_HSI_SetCalibTrimming(16);
+    LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_1, LL_RCC_PLL_MUL_9);
+    LL_RCC_PLL_Enable();
 
-   /* Update the time base */
-  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
-  {
-    Error_Handler();  
-  };
-  LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK2);
-  LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
-}
+    /* Wait till PLL is ready */
+    while (LL_RCC_PLL_IsReady() != 1)
+	{
+
+	}
+    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+    LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
+    LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
+    LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+
+    /* Wait till System clock is ready */
+    while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+	{
+
+	}
+    LL_SetSystemCoreClock(72000000);
+
+    /* Update the time base */
+    if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK)
+	{
+	Error_Handler();
+	};
+    LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK2);
+    LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
+    }
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+    {
+    /* USER CODE BEGIN Error_Handler_Debug */
+    /* User can add his own implementation to report the HAL error return state */
 
-  /* USER CODE END Error_Handler_Debug */
-}
+    /* USER CODE END Error_Handler_Debug */
+    }
 
 #ifdef  USE_FULL_ASSERT
 /**
