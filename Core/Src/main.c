@@ -73,6 +73,7 @@ extern UART_HandleTypeDef huart1;
 uint8_t buf2[14];
 
 char str1[50];
+volatile u8 who_am_i = 0;
 void Task_led(void)
     {
     float theta, phi, rho;
@@ -88,6 +89,8 @@ void Task_led(void)
 	    (int) phi, (int) rho);
 
     HAL_UART_Transmit(&huart1, (uint8_t*) str1, strlen(str1), 0x1000);
+
+    who_am_i = I2Cx_ReadData(0xD1, 0x75);
     }
 
 volatile u32 count = 0;
@@ -106,128 +109,131 @@ void Acc_read(void)
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
-    {
-    /* USER CODE BEGIN 1 */
+{
+  /* USER CODE BEGIN 1 */
 
-    /* USER CODE END 1 */
+  /* USER CODE END 1 */
+  
 
-    /* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-    HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-    /* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-    /* USER CODE END Init */
+  /* USER CODE END Init */
 
-    /* Configure the system clock */
-    SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-    /* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
     InitRTOS();
-    /* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
-    MX_USART1_UART_Init();
-    MX_TIM2_Init();
-    MX_I2C1_Init();
-    /* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART1_UART_Init();
+  MX_TIM2_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
     Accel_Init();
     Task_led();
     Acc_read();
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
+ 
+ 
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
     while (1)
 	{
 	TaskManager();
-	/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-	/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
-    /* USER CODE END 3 */
-    }
+  /* USER CODE END 3 */
+}
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
-    {
-    LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
+{
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
 
-    if (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2)
-	{
-	Error_Handler();
-	}
-    LL_RCC_HSE_Enable();
+   if(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2)
+  {
+  Error_Handler();  
+  }
+  LL_RCC_HSE_Enable();
 
-    /* Wait till HSE is ready */
-    while (LL_RCC_HSE_IsReady() != 1)
-	{
+   /* Wait till HSE is ready */
+  while(LL_RCC_HSE_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_HSI_Enable();
 
-	}
-    LL_RCC_HSI_Enable();
+   /* Wait till HSI is ready */
+  while(LL_RCC_HSI_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_HSI_SetCalibTrimming(16);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_1, LL_RCC_PLL_MUL_9);
+  LL_RCC_PLL_Enable();
 
-    /* Wait till HSI is ready */
-    while (LL_RCC_HSI_IsReady() != 1)
-	{
+   /* Wait till PLL is ready */
+  while(LL_RCC_PLL_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
+  LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
 
-	}
-    LL_RCC_HSI_SetCalibTrimming(16);
-    LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_1, LL_RCC_PLL_MUL_9);
-    LL_RCC_PLL_Enable();
+   /* Wait till System clock is ready */
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+  {
+  
+  }
+  LL_SetSystemCoreClock(72000000);
 
-    /* Wait till PLL is ready */
-    while (LL_RCC_PLL_IsReady() != 1)
-	{
-
-	}
-    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-    LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
-    LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_1);
-    LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
-
-    /* Wait till System clock is ready */
-    while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
-	{
-
-	}
-    LL_SetSystemCoreClock(72000000);
-
-    /* Update the time base */
-    if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK)
-	{
-	Error_Handler();
-	};
-    LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK2);
-    LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
-    }
+   /* Update the time base */
+  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
+  {
+    Error_Handler();  
+  };
+  LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK2);
+  LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
+}
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
-    {
-    /* USER CODE BEGIN Error_Handler_Debug */
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
-    /* USER CODE END Error_Handler_Debug */
-    }
+  /* USER CODE END Error_Handler_Debug */
+}
 
 #ifdef  USE_FULL_ASSERT
 /**
