@@ -17,7 +17,6 @@ static void Accel_Get_raw(void);
 u8 Accel_ReadID(void);
 static void Error(void);
 
-
 extern I2C_HandleTypeDef hi2c1;
 LSM_DATA LSM303_data;
 
@@ -49,11 +48,11 @@ inline static void Accel_Get_raw(void)
     u8 temp[6];
     Accel_IO_Read_byf(0x32, LSM303DLHC_OUT_X_L_A | 0x80, temp, 6);
     LSM303_data.accX = temp[0];
-    LSM303_data.accX = (temp[1] << 8);
+    LSM303_data.accX |= (temp[1] << 8);
     LSM303_data.accY = temp[2];
-    LSM303_data.accY = (temp[3] << 8);
+    LSM303_data.accY |= (temp[3] << 8);
     LSM303_data.accZ = temp[4];
-    LSM303_data.accZ = (temp[5] << 8);
+    LSM303_data.accZ |= (temp[5] << 8);
     }
 
 inline static void Mag_Get_raw(void)
@@ -61,14 +60,13 @@ inline static void Mag_Get_raw(void)
     /* Read output register X, Y & Z acceleration */
     u8 temp[6];
     Accel_IO_Read_byf(0x3D, 0x03 | 0x80, temp, 6);
-    LSM303_data.magX = temp[0];
-    LSM303_data.magX = (temp[1] << 8);
-    LSM303_data.magY = temp[2];
-    LSM303_data.magY = (temp[3] << 8);
-    LSM303_data.magZ = temp[4];
-    LSM303_data.magZ = (temp[5] << 8);
+    LSM303_data.magX = (temp[0]<<8);
+    LSM303_data.magX |= temp[1];
+    LSM303_data.magZ = (temp[2]<<8);
+    LSM303_data.magZ |= temp[3];
+    LSM303_data.magY = (temp[4]<<8);
+    LSM303_data.magY |= temp[5];
     }
-
 
 u8 Accel_ReadID(void)
     {
@@ -131,12 +129,12 @@ void Mag_int(void)
     {
     LED_O1_GPIO_Port->ODR ^= LED_O1_Pin;
     Mag_Get_raw();
-    SetTimerTask(Mag_int,99);
+    SetTimerTask(Mag_int, 99);
     }
 
 void Acc_int(void)
     {
     LED_O2_GPIO_Port->ODR ^= LED_O2_Pin;
     Accel_Get_raw();
-    SetTimerTask(Acc_int,99);
+    SetTimerTask(Acc_int, 99);
     }

@@ -18,7 +18,6 @@
  */
 /* USER CODE END Header */
 
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "i2c.h"
@@ -29,7 +28,6 @@
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
@@ -65,14 +63,34 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+extern LSM_DATA LSM303_data;
+#include "string.h"
+
+extern UART_HandleTypeDef huart1;
+
+uint8_t buf2[14];
+
+char str1[50];
 void Task_led(void)
     {
+    float theta, phi, rho;
     SetTimerTask(Task_led, 49);
-    LED_G1_GPIO_Port->ODR ^= LED_G1_Pin;
+    LED_B1_GPIO_Port->ODR ^= LED_B1_Pin;
+    theta = atan2f(LSM303_data.accX, LSM303_data.accY) * 57.2957795f; //оригинал
+    phi = atan2f(LSM303_data.accY, -LSM303_data.accZ) * 57.2957795f; //оригинал
+    rho = atan2f(LSM303_data.accZ, LSM303_data.accX) * 57.2957795f; //оригинал
+
+    sprintf(str1, "%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n", LSM303_data.accX,
+	    LSM303_data.accY, LSM303_data.accZ, LSM303_data.magX * 10,
+	    LSM303_data.magY * 10, LSM303_data.magZ * 10, (int) theta,
+	    (int) phi, (int) rho);
+
+    HAL_UART_Transmit(&huart1, (uint8_t*) str1, strlen(str1), 0x1000);
     }
 
 volatile u32 count = 0;
-extern LSM_DATA LSM303_data;
+
 void Acc_read(void)
     {
     count++;
@@ -129,6 +147,7 @@ int main(void)
 	{
 	TaskManager();
 	/* USER CODE END WHILE */
+
 	/* USER CODE BEGIN 3 */
 	}
     /* USER CODE END 3 */
