@@ -25,6 +25,9 @@ typedef struct
 	int16_t accY;
 	int16_t accZ;
 	int16_t Temp;
+	float pith;
+	float roll;
+	float yaw;
     } LSM_DATA;
 
 #define LSM303DLHC_NORMAL_MODE            ((uint8_t)0x00)

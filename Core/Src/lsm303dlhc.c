@@ -49,11 +49,11 @@ inline static void Accel_Get_raw(void)
     u8 temp[6];
     Accel_IO_Read_byf(0x32, LSM303DLHC_OUT_X_L_A | 0x80, temp, 6);
     LSM303_data.accX = temp[0];
-    LSM303_data.accX = (temp[1] << 8);
+    LSM303_data.accX |= (temp[1] << 8);
     LSM303_data.accY = temp[2];
-    LSM303_data.accY = (temp[3] << 8);
+    LSM303_data.accY |= (temp[3] << 8);
     LSM303_data.accZ = temp[4];
-    LSM303_data.accZ = (temp[5] << 8);
+    LSM303_data.accZ |= (temp[5] << 8);
     }
 
 inline static void Mag_Get_raw(void)
@@ -61,12 +61,12 @@ inline static void Mag_Get_raw(void)
     /* Read output register X, Y & Z acceleration */
     u8 temp[6];
     Accel_IO_Read_byf(0x3D, 0x03 | 0x80, temp, 6);
-    LSM303_data.magX = temp[0];
-    LSM303_data.magX = (temp[1] << 8);
-    LSM303_data.magY = temp[2];
-    LSM303_data.magY = (temp[3] << 8);
-    LSM303_data.magZ = temp[4];
-    LSM303_data.magZ = (temp[5] << 8);
+    LSM303_data.magX = (temp[0] << 8);
+    LSM303_data.magX = temp[1];
+    LSM303_data.magY = (temp[2] << 8);
+    LSM303_data.magY = temp[3];
+    LSM303_data.magZ = (temp[4] << 8);
+    LSM303_data.magZ = temp[5];
     }
 
 

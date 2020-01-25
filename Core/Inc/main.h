@@ -44,6 +44,7 @@ extern "C" {
 #include "lsm303dlhc.h"
 #include "EERTOS.h"
 #include "stdio.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -100,6 +101,12 @@ void Error_Handler(void);
 #define LED_O2_GPIO_Port GPIOE
 #define LED_G2_Pin GPIO_PIN_15
 #define LED_G2_GPIO_Port GPIOE
+#define MPU_INT0_Pin GPIO_PIN_0
+#define MPU_INT0_GPIO_Port GPIOE
+#define MPU_INT0_EXTI_IRQn EXTI0_IRQn
+#define MPU_INT1_Pin GPIO_PIN_1
+#define MPU_INT1_GPIO_Port GPIOE
+#define MPU_INT1_EXTI_IRQn EXTI1_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
