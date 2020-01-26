@@ -13,6 +13,9 @@ void Accel_Init(void);
 void Accel_GetXYZ(int16_t *pData);
 void Mag_GetXYZ(int16_t *pData);
 uint8_t Accel_IO_Read(uint16_t DeviceAddr, uint8_t RegisterAddr);
+void Accel_IO_Read_byf(uint16_t DeviceAddr, uint8_t RegisterAddr, uint8_t *data,
+	uint8_t len);
+void Accel_IO_Write(uint16_t DeviceAddr, uint8_t RegisterAddr, uint8_t Value);
 void Acc_int(void);
 void Mag_int(void);
 

@@ -42,6 +42,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lsm303dlhc.h"
+#include "mpu6050.h"
 #include "EERTOS.h"
 #include "stdio.h"
 #include "math.h"
@@ -79,12 +80,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MAG_DRDY_PIN_Pin GPIO_PIN_2
-#define MAG_DRDY_PIN_GPIO_Port GPIOE
-#define MAG_DRDY_PIN_EXTI_IRQn EXTI2_TSC_IRQn
-#define ACC_DRDY_PIN_Pin GPIO_PIN_4
-#define ACC_DRDY_PIN_GPIO_Port GPIOE
-#define ACC_DRDY_PIN_EXTI_IRQn EXTI4_IRQn
 #define LED_B1_Pin GPIO_PIN_8
 #define LED_B1_GPIO_Port GPIOE
 #define LED_R1_Pin GPIO_PIN_9
@@ -101,12 +96,12 @@ void Error_Handler(void);
 #define LED_O2_GPIO_Port GPIOE
 #define LED_G2_Pin GPIO_PIN_15
 #define LED_G2_GPIO_Port GPIOE
-#define MPU_INT0_Pin GPIO_PIN_0
-#define MPU_INT0_GPIO_Port GPIOE
-#define MPU_INT0_EXTI_IRQn EXTI0_IRQn
-#define MPU_INT1_Pin GPIO_PIN_1
-#define MPU_INT1_GPIO_Port GPIOE
-#define MPU_INT1_EXTI_IRQn EXTI1_IRQn
+#define MPU_INT1_Pin GPIO_PIN_4
+#define MPU_INT1_GPIO_Port GPIOB
+#define MPU_INT1_EXTI_IRQn EXTI4_IRQn
+#define MPU_INT0_Pin GPIO_PIN_5
+#define MPU_INT0_GPIO_Port GPIOB
+#define MPU_INT0_EXTI_IRQn EXTI9_5_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

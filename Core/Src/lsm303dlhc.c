@@ -9,9 +9,7 @@
 #include "main.h"
 
 u8 I2Cx_ReadData(u16 Addr, u8 Reg);
-void Accel_IO_Write(u16 DeviceAddr, u8 RegisterAddr, u8 Value);
 static void I2Cx_WriteData(u16 Addr, u8 Reg, u8 Value);
-void Accel_IO_Read_byf(u16 DeviceAddr, u8 RegisterAddr, u8 *data, u8 len);
 static void Mag_Get_raw(void);
 static void Accel_Get_raw(void);
 u8 Accel_ReadID(void);
