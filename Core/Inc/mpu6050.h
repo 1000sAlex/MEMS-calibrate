@@ -34,6 +34,7 @@ typedef struct
 
 	int16_t Temp1;
 	int16_t Temp2;
+	uint8_t raw_data[28];
     } MPU_DATA;
 
 #define MPU6050_ADDRESS_AD0     0xD0 // address pin low (GND), default for InvenSense evaluation board

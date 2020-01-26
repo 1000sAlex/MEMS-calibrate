@@ -74,24 +74,19 @@ extern UART_HandleTypeDef huart1;
 
 uint8_t buf2[14];
 
-char str1[50];
+char str1[60];
 volatile u8 who_am_i = 0;
 void Task_led(void)
     {
-    float theta, phi, rho;
     SetTimerTask(Task_led, 49);
-    LED_B1_GPIO_Port->ODR ^= LED_B1_Pin;
-    theta = atan2f(LSM303_data.accX, LSM303_data.accY) * 57.2957795f; //оригинал
-    phi = atan2f(LSM303_data.accY, -LSM303_data.accZ) * 57.2957795f; //оригинал
-    rho = atan2f(LSM303_data.accZ, LSM303_data.accX) * 57.2957795f; //оригинал
+    LED_B2_GPIO_Port->ODR |= LED_B2_Pin;
+    u16 len = sprintf(str1, "%d;%d;%d;%d;%d;%d\r\n", MPU_data.accX1,
+	    MPU_data.accY1, MPU_data.accZ1, MPU_data.accX2, MPU_data.accY2,
+	    MPU_data.accZ2);
 
-    sprintf(str1, "%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n", LSM303_data.accX,
-	    LSM303_data.accY, LSM303_data.accZ, LSM303_data.magX * 10,
-	    LSM303_data.magY * 10, LSM303_data.magZ * 10, (int) theta,
-	    (int) phi, (int) rho);
-    char bin_data_str[28];
     //HAL_UART_Transmit(&huart1, (uint8_t*) str1, strlen(str1), 0x1000);
-    //HAL_UART_Transmit_DMA(&huart1, ptr, 28);
+    HAL_UART_Transmit_DMA(&huart1, str1, len);
+    LED_B2_GPIO_Port->ODR &= ~ LED_B2_Pin;
 
     //who_am_i = I2Cx_ReadData(0xD1, 0x75);
     }
