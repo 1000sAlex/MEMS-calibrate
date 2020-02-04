@@ -11,10 +11,28 @@
 #include "main.h"
 
 #define RAD_TO_DEG 57.295779513082320876798154814105f
-void MPU_get_data(void);
-void MPU_init(void);
+
+#define MPU_OK 0
+#define MPU_1_ERR 1
+#define MPU_2_ERR 2
+uint8_t MPU_init(void);
+
+#define COLIB_MPU_1_START 0
+#define COLIB_MPU_2_START 1
+#define COLIB_MPU_1_READY 6
+#define COLIB_MPU_2_READY 7
+
+#define K 0.05f
+#define COLIB_NUMBER 100
+uint16_t colib_number;
+void MPU6050_1_colibrate(void);
+void MPU6050_2_colibrate(void);
+void MPU6050_colibrate_start(void);
+
 void MPU6050_1_get_raw(void);
 void MPU6050_2_get_raw(void);
+
+
 
 typedef struct
     {
@@ -25,6 +43,14 @@ typedef struct
 	int16_t gY2;
 	int16_t gZ2;
 
+	int16_t bias_gX1;
+	int16_t bias_gY1;
+	int16_t bias_gZ1;
+
+	int16_t bias_gX2;
+	int16_t bias_gY2;
+	int16_t bias_gZ2;
+
 	int16_t accX1;
 	int16_t accY1;
 	int16_t accZ1;
@@ -34,7 +60,25 @@ typedef struct
 
 	int16_t Temp1;
 	int16_t Temp2;
-	uint8_t raw_data[28];
+
+	float q0_1;
+	float q1_1;
+	float q2_1;
+	float q3_1;
+
+	float q0_2;
+	float q1_2;
+	float q2_2;
+	float q3_2;
+
+	float pitch_1;
+	float roll_1;
+	float yaw_1;
+
+	float pitch_2;
+	float roll_2;
+	float yaw_2;
+
     } MPU_DATA;
 
 #define MPU6050_ADDRESS_AD0     0xD0 // address pin low (GND), default for InvenSense evaluation board

@@ -58,11 +58,11 @@ inline static void Mag_Get_raw(void)
     /* Read output register X, Y & Z acceleration */
     u8 temp[6];
     Accel_IO_Read_byf(0x3D, 0x03 | 0x80, temp, 6);
-    LSM303_data.magX = (temp[0]<<8);
+    LSM303_data.magX = (temp[0] << 8);
     LSM303_data.magX |= temp[1];
-    LSM303_data.magZ = (temp[2]<<8);
+    LSM303_data.magZ = (temp[2] << 8);
     LSM303_data.magZ |= temp[3];
-    LSM303_data.magY = (temp[4]<<8);
+    LSM303_data.magY = (temp[4] << 8);
     LSM303_data.magY |= temp[5];
     }
 
@@ -77,9 +77,14 @@ void Accel_IO_Read_byf(u16 DeviceAddr, u8 RegisterAddr, u8 *data, u8 len)
     {
     HAL_StatusTypeDef status = HAL_OK;
     status = HAL_I2C_Mem_Read(&hi2c1, DeviceAddr, RegisterAddr,
-    I2C_MEMADD_SIZE_8BIT, data, len, 0x100);
+    I2C_MEMADD_SIZE_8BIT, data, len, 2);
     if (status != HAL_OK)
 	{
+	u32 temp = hi2c1.Instance->ISR;
+	hi2c1.Instance->ICR |= temp & 0x3F37;
+	hi2c1.Instance->CR1 &=~ I2C_CR1_PE;
+	HAL_Delay(1);
+	hi2c1.Instance->CR1 |= I2C_CR1_PE;
 	Error();
 	}
     }

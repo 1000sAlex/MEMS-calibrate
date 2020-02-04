@@ -9,32 +9,105 @@
 #include "lsm303dlhc.h"
 u8 startup_flag = 0;
 
-MPU_DATA MPU_data;
+MPU_DATA mpu;
 
-void MPU_get_data(void)
+static u8 colibrate_init = 0;
+
+void MPU6050_colibrate_start(void)
     {
-//    static float avg_pitch = 0;
-//    static float avg_roll = 0;
-//    AccX = ((float) ((s16) ((i2c_data_get_buf[0] << 8) | i2c_data_get_buf[1])))
-//	    * (2.0 / 32768.0);
-//    AccY = ((float) ((s16) ((i2c_data_get_buf[2] << 8) | i2c_data_get_buf[3])))
-//	    * (2.0 / 32768.0);
-//    AccZ = ((float) ((s16) ((i2c_data_get_buf[4] << 8) | i2c_data_get_buf[5])))
-//	    * (2.0 / 32768.0);
-//    GyroX = ((float) ((s16) ((i2c_data_get_buf[8] << 8) | i2c_data_get_buf[9])))
-//	    * (500.0 / 32768.0);
-//    GyroY = ((float) ((s16) ((i2c_data_get_buf[10] << 8) | i2c_data_get_buf[11])))
-//		    * (500.0 / 32768.0);
-//    GyroZ =
-//	    ((float) ((s16) ((i2c_data_get_buf[12] << 8) | i2c_data_get_buf[13])))
-//		    * (500.0 / 32768.0);
-//    MadgwickAHRSupdateIMU(AccX, AccY, AccZ, GyroX * M_PI / 180.0f,
-//	    GyroY * M_PI / 180.0f, GyroZ * M_PI / 180.0f); //,mag_data[0],mag_data[1],-mag_data[2]);
-//    Convert();
-//    avg_pitch = (avg_pitch * (1 - K)) + (pitch * K);
-//    avg_roll = (avg_roll * (1 - K)) + (roll * K);
-//    //avg_yaw = (avg_yaw * 0.9) + (yaw * 0.1);
+    if (colib_number == 0)
+	{
+	colib_number = COLIB_NUMBER;
+	}
+    if (BitIsClear(colibrate_init, COLIB_MPU_1_START) &&
+    BitIsClear(colibrate_init, COLIB_MPU_1_READY))
+	{
+	MPU6050_1_colibrate();
+	}
+    if (BitIsClear(colibrate_init, COLIB_MPU_2_START) &&
+    BitIsClear(colibrate_init, COLIB_MPU_2_READY))
+	{
+	MPU6050_2_colibrate();
+	}
+    if (BitIsSet(colibrate_init, COLIB_MPU_1_READY) &&
+    BitIsSet(colibrate_init,COLIB_MPU_2_READY))
+	{
+#if (DEBUG == 1)
+	printf("COLIB_READY\n");
+	printf("gX1=%d gY1=%d gZ1=%d\n", mpu.bias_gX1, mpu.bias_gY1,
+		mpu.bias_gZ1);
+	printf("gX2=%d gY2=%d gZ2=%d\n", mpu.bias_gX2, mpu.bias_gY2,
+		mpu.bias_gZ2);
+#endif
+	mpu.q0_1 = 1.0f;
+	mpu.q0_2 = 1.0f;
+	}
+    }
 
+void MPU6050_1_colibrate(void)
+    {
+    static u16 colib_count = 0;
+    static float x, y, z;
+    if (BitIsClear(colibrate_init, COLIB_MPU_1_START))
+	{
+	x = mpu.gX1;
+	y = mpu.gY1;
+	z = mpu.gZ1;
+	colibrate_init |= (1 << COLIB_MPU_1_START);
+	}
+    else
+	{
+	if (colib_count < colib_number)
+	    {
+	    x = x * (1 - K) + mpu.gX1 * K;
+	    y = y * (1 - K) + mpu.gY1 * K;
+	    z = z * (1 - K) + mpu.gZ1 * K;
+	    colib_count++;
+	    }
+	else
+	    {
+	    mpu.bias_gX1 = (s16) x;
+	    mpu.bias_gY1 = (s16) y;
+	    mpu.bias_gZ1 = (s16) z;
+	    colibrate_init &= ~(1 << COLIB_MPU_1_START);
+	    colibrate_init |= (1 << COLIB_MPU_1_READY);
+	    SetTask(MPU6050_colibrate_start);
+	    colib_count = 0;
+	    }
+	}
+    }
+
+void MPU6050_2_colibrate(void)
+    {
+    static u16 colib_count = 0;
+    static float x, y, z;
+    if (BitIsClear(colibrate_init, COLIB_MPU_2_START))
+	{
+	x = mpu.gX2;
+	y = mpu.gY2;
+	z = mpu.gZ2;
+	colibrate_init |= (1 << COLIB_MPU_2_START);
+	}
+    else
+	{
+	if (colib_count < colib_number)
+	    {
+	    x = x * (1 - K) + mpu.gX2 * K;
+	    y = y * (1 - K) + mpu.gY2 * K;
+	    z = z * (1 - K) + mpu.gZ2 * K;
+	    colib_count++;
+	    }
+	else
+	    {
+	    mpu.bias_gX2 = (s16) x;
+	    mpu.bias_gY2 = (s16) y;
+	    mpu.bias_gZ2 = (s16) z;
+	    colibrate_init &= ~(1 << COLIB_MPU_2_START);
+	    colibrate_init |= (1 << COLIB_MPU_2_READY);
+	    SetTask(MPU6050_colibrate_start);
+	    colib_count = 0;
+	    }
+	}
     }
 
 void MPU6050_1_get_raw(void)
@@ -43,18 +116,22 @@ void MPU6050_1_get_raw(void)
 	{
 	u8 data[14];
 	Accel_IO_Read_byf(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, data, 14);
-	MPU_data.accX1 = (data[0] << 8) | data[1];
-	MPU_data.accY1 = (data[2] << 8) | data[3];
-	MPU_data.accZ1 = (data[4] << 8) | data[5];
-	MPU_data.Temp1 = (data[6] << 8) | data[7];
-	MPU_data.gX1 = (data[8] << 8) | data[9];
-	MPU_data.gY1 = (data[10] << 8) | data[11];
-	MPU_data.gZ1 = (data[12] << 8) | data[13];
-	for (u8 i = 0; i < 14; i++)
-	    {
-	    MPU_data.raw_data[i] = data[i];
-	    }
+	mpu.accX1 = (data[0] << 8) | data[1];
+	mpu.accY1 = (data[2] << 8) | data[3];
+	mpu.accZ1 = (data[4] << 8) | data[5];
+	mpu.Temp1 = (data[6] << 8) | data[7];
+	mpu.gX1 = (data[8] << 8) | data[9];
+	mpu.gY1 = (data[10] << 8) | data[11];
+	mpu.gZ1 = (data[12] << 8) | data[13];
 	SetTimerTask(MPU6050_1_get_raw, 110);
+	if (BitIsSet(colibrate_init, COLIB_MPU_1_START))
+	    {
+	    SetTask(MPU6050_1_colibrate);
+	    }
+	else if (BitIsSet(colibrate_init, COLIB_MPU_1_READY))
+	    {
+	    SetTask(position_1_calc);
+	    }
 	}
     }
 
@@ -64,22 +141,28 @@ void MPU6050_2_get_raw(void)
 	{
 	u8 data[14];
 	Accel_IO_Read_byf(MPU6050_ADDRESS2, MPU6050_RA_ACCEL_XOUT_H, data, 14);
-	MPU_data.accX2 = (data[0] << 8) | data[1];
-	MPU_data.accY2 = (data[2] << 8) | data[3];
-	MPU_data.accZ2 = (data[4] << 8) | data[5];
-	MPU_data.Temp2 = (data[6] << 8) | data[7];
-	MPU_data.gX2 = (data[8] << 8) | data[9];
-	MPU_data.gY2 = (data[10] << 8) | data[11];
-	MPU_data.gZ2 = (data[12] << 8) | data[13];
-	for (u8 i = 0; i < 14; i++)
-	    {
-	    MPU_data.raw_data[14 + i] = data[i];
-	    }
+	mpu.accX2 = (data[0] << 8) | data[1];
+	mpu.accY2 = (data[2] << 8) | data[3];
+	mpu.accZ2 = (data[4] << 8) | data[5];
+	mpu.Temp2 = (data[6] << 8) | data[7];
+	mpu.gX2 = (data[8] << 8) | data[9];
+	mpu.gY2 = (data[10] << 8) | data[11];
+	mpu.gZ2 = (data[12] << 8) | data[13];
 	SetTimerTask(MPU6050_2_get_raw, 110);
+	if (BitIsSet(colibrate_init, COLIB_MPU_2_START))
+	    {
+	    SetTask(MPU6050_2_colibrate);
+	    }
+	else if (BitIsSet(colibrate_init, COLIB_MPU_1_READY))
+	    {
+		{
+		SetTask(position_2_calc);
+		}
+	    }
 	}
     }
 
-void MPU_init(void)
+u8 MPU_init(void)
     {
     //сбрасываем mpu
     HAL_Delay(100);
@@ -89,13 +172,13 @@ void MPU_init(void)
 	HAL_Delay(100);
 	Accel_IO_Write(MPU6050_ADDRESS, MPU6050_RA_PWR_MGMT_1, 0x01);
 	HAL_Delay(100);
-	LED_G1_GPIO_Port->ODR |= LED_G1_Pin;
 	startup_flag = 1;
 	SetTimerTask(MPU6050_1_get_raw, 100);
-	//500 гц частота работы
+	//частота работы
 	Accel_IO_Write(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 9); //100гц
 	//включаем фильтр и делаем частоту тактирования гироскопа 1кгц
-	Accel_IO_Write(MPU6050_ADDRESS, MPU6050_RA_CONFIG, MPU6050_DLPF_BW_42);
+	Accel_IO_Write(MPU6050_ADDRESS, MPU6050_RA_CONFIG,
+	MPU6050_DLPF_BW_42);
 	//задаем диапазон гироскопа +-500 градусов в сек
 	Accel_IO_Write(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG,
 	MPU6050_GYRO_FS_500 << 3);
@@ -111,8 +194,8 @@ void MPU_init(void)
 	}
     else
 	{
-	LED_R1_GPIO_Port->ODR |= LED_R1_Pin;
 	startup_flag = 0;
+	return MPU_1_ERR;
 	}
     //мпу 2
 
@@ -122,13 +205,13 @@ void MPU_init(void)
 	HAL_Delay(100);
 	Accel_IO_Write(MPU6050_ADDRESS2, MPU6050_RA_PWR_MGMT_1, 0x01);
 	HAL_Delay(100);
-	LED_G2_GPIO_Port->ODR |= LED_G2_Pin;
 	startup_flag = 1;
 	SetTimerTask(MPU6050_2_get_raw, 100);
-	//500 гц частота работы
+	//частота работы
 	Accel_IO_Write(MPU6050_ADDRESS2, MPU6050_RA_SMPLRT_DIV, 9); //100гц
 	//включаем фильтр и делаем частоту тактирования гироскопа 1кгц
-	Accel_IO_Write(MPU6050_ADDRESS2, MPU6050_RA_CONFIG, MPU6050_DLPF_BW_42);
+	Accel_IO_Write(MPU6050_ADDRESS2, MPU6050_RA_CONFIG,
+	MPU6050_DLPF_BW_42);
 	//задаем диапазон гироскопа +-500 градусов в сек
 	Accel_IO_Write(MPU6050_ADDRESS2, MPU6050_RA_GYRO_CONFIG,
 	MPU6050_GYRO_FS_500 << 3);
@@ -144,7 +227,8 @@ void MPU_init(void)
 	}
     else
 	{
-	LED_R2_GPIO_Port->ODR |= LED_R2_Pin;
 	startup_flag = 0;
+	return MPU_2_ERR;
 	}
+    return MPU_OK;
     }

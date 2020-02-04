@@ -46,6 +46,10 @@ extern "C" {
 #include "EERTOS.h"
 #include "stdio.h"
 #include "math.h"
+#include "position_calc.h"
+
+
+#define DEBUG 1
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

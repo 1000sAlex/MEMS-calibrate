@@ -28,16 +28,19 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "string.h"
 
+extern UART_HandleTypeDef huart1;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 int _write(int file, char *ptr, int len)
     {
-    int i = 0;
-    for (i = 0; i < len; i++)
-	ITM_SendChar(*ptr++);
+//    int i = 0;
+//    for (i = 0; i < len; i++)
+//	ITM_SendChar(*ptr++);
+    HAL_UART_Transmit_IT(&huart1, ptr, len);
     return len;
     }
 /* USER CODE END PTD */
@@ -66,45 +69,18 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern LSM_DATA LSM303_data;
-extern MPU_DATA MPU_data;
-#include "string.h"
-
-extern UART_HandleTypeDef huart1;
-
-uint8_t buf2[14];
-
-char str1[60];
-volatile u8 who_am_i = 0;
+//extern MPU_DATA mpu;
 void Task_led(void)
     {
-    SetTimerTask(Task_led, 49);
-    LED_B2_GPIO_Port->ODR |= LED_B2_Pin;
-    u16 len = sprintf(str1, "%d;%d;%d;%d;%d;%d\r\n", MPU_data.accX1,
-	    MPU_data.accY1, MPU_data.accZ1, MPU_data.accX2, MPU_data.accY2,
-	    MPU_data.accZ2);
+//    static char str1[60];
 
-    //HAL_UART_Transmit(&huart1, (uint8_t*) str1, strlen(str1), 0x1000);
-    HAL_UART_Transmit_DMA(&huart1, str1, len);
-    LED_B2_GPIO_Port->ODR &= ~ LED_B2_Pin;
-
-    //who_am_i = I2Cx_ReadData(0xD1, 0x75);
+//    SetTimerTask(Task_led, 249);
+//    u16 len = sprintf(str1, "%d;%d;%d;%d;%d;%d\r\n", mpu.accX1, mpu.accY1,
+//	    mpu.accZ1, mpu.accX2, mpu.accY2, mpu.accZ2);
+//    //HAL_UART_Transmit(&huart1, (uint8_t*) str1, len, 0x100);
+//    HAL_UART_Transmit_DMA(&huart1, str1, len);
     }
 
-volatile u32 count = 0;
-
-void Acc_read(void)
-    {
-    count++;
-    SetTimerTask(Acc_read, 100);
-    MPU6050_1_get_raw();
-    //Accel_GetXYZ(buf);
-    printf("acc X=%d, Y=%d, Z=%d\n", LSM303_data.accX, LSM303_data.accY,
-	    LSM303_data.accZ);
-    //Mag_GetXYZ(buf);
-    printf("mag X=%d, Y=%d, Z=%d\n", LSM303_data.magX, LSM303_data.magY,
-	    LSM303_data.magZ);
-    }
 /* USER CODE END 0 */
 
 /**
@@ -139,11 +115,11 @@ int main(void)
     MX_USART1_UART_Init();
     MX_TIM2_Init();
     MX_I2C1_Init();
+    position_init();
     /* USER CODE BEGIN 2 */
     //Accel_Init();
     //Acc_read();
     Task_led();
-    MPU_init();
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
